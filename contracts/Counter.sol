@@ -3,8 +3,8 @@ pragma solidity ^0.8.7;
 
 error WeightExceeded();
 error NotEnoughCoins();
-error NotEnoughFundInAccount();
-error BalanceAmountShouldBeGreaterThanZero();
+error NotEnoughFundInAccount(uint256 _currentBalance);
+error BalanceAmountShouldBeGreaterThanWithdrawlAmount(uint256 _currentBalance, uint256 _withdrawAmt);
 error TransactionFailed();
 
 contract Counter {
@@ -165,19 +165,14 @@ contract Counter {
         balances[flyerAddress] += transaction[_transactionId].totalAmount;
     }
 
-    /* Function to Withdraw Entire Balance */
-    function withdraw() public payable {
-        withdraw(balances[msg.sender]);
-    }
-
     /* Function to Withdraw Given Balance */
     function withdraw(uint256 _amtWithdraw) public payable {
-        if (balances[msg.sender] >= 0) revert NotEnoughFundInAccount();
-        if (balances[msg.sender] >= _amtWithdraw) revert BalanceAmountShouldBeGreaterThanZero();
+        if (balances[msg.sender] == 0) revert NotEnoughFundInAccount(balances[msg.sender]);
+        if (balances[msg.sender] < _amtWithdraw) revert BalanceAmountShouldBeGreaterThanWithdrawlAmount(balances[msg.sender], _amtWithdraw);
 
         balances[msg.sender] -= _amtWithdraw;
         (bool success, ) = msg.sender.call{value: _amtWithdraw}("");
-        if (!success) {
+         if (!success) {
             revert TransactionFailed();
         }
     }
